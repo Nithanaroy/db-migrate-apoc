@@ -1,7 +1,5 @@
 package example;
 
-import static org.neo4j.driver.v1.Values.parameters;
-
 import org.junit.Rule;
 import org.junit.Test;
 import org.neo4j.driver.v1.Config;
@@ -28,7 +26,7 @@ public class DBMigrateTest {
 			// which my 'neo4j' rule above does.
 			// And given I have a node in the database
 			session.run("CREATE (p:VERSION {version: -1}) RETURN id(p)");
-			session.run("CALL example.migrate(\"/Users/nitinp/Projects/db-migrate-apoc/public/\")");
+			session.run("CALL example.upgrade(\"/Users/nitinp/Projects/db-migrate-apoc/public/\")");
 			// When I use the index procedure to index a node
 			// System.out.println(session.run("CALL
 			// example.version()").single().get(0).asLong());

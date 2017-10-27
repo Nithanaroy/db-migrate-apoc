@@ -1,39 +1,63 @@
 package example;
 
 import java.io.File;
+import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.Comparator;
 
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.ResourceIterator;
-import org.neo4j.logging.Log;
+import org.neo4j.graphdb.Transaction;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
+import org.neo4j.procedure.Mode;
 import org.neo4j.procedure.Name;
 import org.neo4j.procedure.Procedure;
 
 public class DBMigrate {
-	@Context
-	public Log log;
+
+	private final static String setDBVersionCypher = "MERGE (v:VERSION) SET v.version = %s RETURN v";
 
 	@Context
 	public GraphDatabaseService db;
 
-	@Procedure("example.migrate")
+	@Procedure(value = "example.upgrade", mode = Mode.WRITE)
 	@Description("Upgrades the DB to the latest version")
-	public void migrate(@Name("folder") String folder) {
-		System.out.println("Hello World from migrate");
-		long version = currentDBVersion();
+	public void upgrade(@Name("folder") String folder) {
+		System.out.println("Hello World from upgrade");
+		try {
+			long currentVersion = currentDBVersion();
+			JSONParser parser = new JSONParser();
+			File[] files = filesToMigrate(folder, currentVersion);
 
-		filesToMigrate(folder, version);
+			for (File file : files) {
+				System.out.println(String.format("Running migration file, '%s'", file.getName()));
+				long version = getVersionFromFile(file);
+				JSONObject jsonObject = (JSONObject) parser.parse(new FileReader(file.getAbsoluteFile()));
+				String cypher = (String) jsonObject.get("upgrade");
+				System.out.println(String.format("Executing cypher, '%s'", cypher));
+				Transaction t = db.beginTx();
+				db.execute(cypher);
+				db.execute(String.format(setDBVersionCypher, version));
+				t.success();
+				t.close();
+			}
+		} catch (Exception e) {
+			throw new RuntimeException(e); // this type is required by neo4j
+		}
 	}
 
 	/**
 	 * Fetches the files to run in order
-	 * @param folder path of the folder to look for migration files 
-	 * @param version current version of database
+	 * 
+	 * @param folder
+	 *            path of the folder to look for migration files
+	 * @param version
+	 *            current version of database
 	 * @return ordered list of files
 	 */
 	public File[] filesToMigrate(String folder, long version) {
@@ -43,7 +67,6 @@ public class DBMigrate {
 			if (file.isFile()) {
 				long fileVersion = getVersionFromFile(file);
 				if (fileVersion > version) {
-					System.out.println("Running file, " + file.getName());
 					resultList.add(file);
 				}
 			}
@@ -63,7 +86,9 @@ public class DBMigrate {
 
 	/**
 	 * Extracts the version number from file name
-	 * @param file instance of file object to get the name from
+	 * 
+	 * @param file
+	 *            instance of file object to get the name from
 	 * @return version number
 	 */
 	private long getVersionFromFile(File file) {
@@ -75,7 +100,6 @@ public class DBMigrate {
 	@Description("Creates a new migration file")
 	public void createMigrationFile(@Name("folder") String folder) {
 		System.out.println("Hello from create migration file");
-		long version = currentDBVersion();
 	}
 
 	public long currentDBVersion() {
