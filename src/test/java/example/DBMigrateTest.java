@@ -27,8 +27,8 @@ public class DBMigrateTest {
 			// Given I've started Neo4j with the FullTextIndex procedure class
 			// which my 'neo4j' rule above does.
 			// And given I have a node in the database
-			session.run("CREATE (p:VERSION {version: 6573467}) RETURN id(p)");
-			session.run("CALL example.migrate(\"dummy\")");
+			session.run("CREATE (p:VERSION {version: -1}) RETURN id(p)");
+			session.run("CALL example.migrate(\"/Users/nitinp/Projects/db-migrate-apoc/public/\")");
 			// When I use the index procedure to index a node
 			// System.out.println(session.run("CALL
 			// example.version()").single().get(0).asLong());
