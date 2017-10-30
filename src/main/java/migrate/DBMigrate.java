@@ -1,4 +1,4 @@
-package example;
+package migrate;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -36,12 +36,12 @@ public class DBMigrate {
 	@Context
 	public GraphDatabaseService db;
 
-	@Procedure(value = "example.toLatest", mode = Mode.WRITE)
+	@Procedure(value = "dbmigrate.toLatest", mode = Mode.WRITE)
 	@Description("Upgrades the DB to the latest version")
 	public Stream<Message> upgrade(@Name("folder") String folder) {
 		System.out.println("Upgrading DB to the latest version");
 		if (!(new File(folder).exists())) {
-			return Stream.of(new Message[] { new Message("Given folder does not exists") });
+			return Stream.of(new Message[] { new Message("Given folder does not exist") });
 		}
 		try {
 			Object[] runStats = upgradeOrDowngradeUptoToVersion(folder, Double.POSITIVE_INFINITY,
@@ -53,12 +53,12 @@ public class DBMigrate {
 		}
 	}
 
-	@Procedure(value = "example.upTo", mode = Mode.WRITE)
+	@Procedure(value = "dbmigrate.upTo", mode = Mode.WRITE)
 	@Description("Upgrades the DB to a version not greater than the specified version")
 	public Stream<Message> upgradeTo(@Name("folder") String folder, @Name("version") long version) {
 		System.out.println(String.format("Running migration, upgrade upto %s", version));
 		if (!(new File(folder).exists())) {
-			return Stream.of(new Message[] { new Message("Given folder does not exists") });
+			return Stream.of(new Message[] { new Message("Given folder does not exist") });
 		}
 		try {
 			Object[] runStats = upgradeOrDowngradeUptoToVersion(folder, version, MigrationType.UPGRADE);
@@ -69,12 +69,12 @@ public class DBMigrate {
 		}
 	}
 
-	@Procedure(value = "example.toOldest", mode = Mode.WRITE)
+	@Procedure(value = "dbmigrate.toOldest", mode = Mode.WRITE)
 	@Description("Downgrades the DB to the oldest version")
 	public Stream<Message> downgrade(@Name("folder") String folder) {
 		System.out.println("Downgrading the DB the oldest version");
 		if (!(new File(folder).exists())) {
-			return Stream.of(new Message[] { new Message("Given folder does not exists") });
+			return Stream.of(new Message[] { new Message("Given folder does not exist") });
 		}
 		try {
 			Object[] runStats = upgradeOrDowngradeUptoToVersion(folder, Double.NEGATIVE_INFINITY,
@@ -87,7 +87,7 @@ public class DBMigrate {
 		}
 	}
 
-	@Procedure(value = "example.downTo", mode = Mode.WRITE)
+	@Procedure(value = "dbmigrate.downTo", mode = Mode.WRITE)
 	@Description("Downgrades the DB to a version not lesser than the specified version")
 	public Stream<Message> downgradeTo(@Name("folder") String folder, @Name("version") long version) {
 		System.out.println(String.format("Running migration, downgrade upto %s", version));
@@ -104,7 +104,7 @@ public class DBMigrate {
 		}
 	}
 
-	@Procedure("example.createMigrationFile")
+	@Procedure("dbmigrate.createMigrationFile")
 	@Description("Creates a new migration file in the folder specified with the given migration name")
 	public Stream<Message> createMigrationFile(@Name("folder") String folder, @Name("name") String name) {
 		System.out.println("Running create migration file");
@@ -120,7 +120,7 @@ public class DBMigrate {
 		}
 	}
 
-	@Procedure(value = "example.version", mode = Mode.READ)
+	@Procedure(value = "dbmigrate.version", mode = Mode.READ)
 	@Description("Find out the current DB version")
 	public Stream<Message> version() {
 		return Stream.of(new Message[] { new Message(String.format("%s", currentDBVersion())) });
@@ -241,7 +241,7 @@ public class DBMigrate {
 	}
 
 	/**
-	 * Extracts the version number from file name Example filename:
+	 * Extracts the version number from file name dbmigrate filename:
 	 * /migrations/23424242424-myMigration.json where version is 23424242424
 	 * 
 	 * @param file

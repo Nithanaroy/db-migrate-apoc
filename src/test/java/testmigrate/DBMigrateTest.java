@@ -1,4 +1,4 @@
-package example;
+package testmigrate;
 
 import java.nio.file.Paths;
 
@@ -10,6 +10,9 @@ import org.neo4j.driver.v1.GraphDatabase;
 import org.neo4j.driver.v1.Session;
 import org.neo4j.driver.v1.StatementResult;
 import org.neo4j.harness.junit.Neo4jRule;
+
+import migrate.DBMigrate;
+
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.junit.Assert.assertThat;
 
@@ -25,7 +28,7 @@ public class DBMigrateTest {
 				Config.build().withEncryptionLevel(Config.EncryptionLevel.NONE).toConfig());
 				Session session = driver.session()) {
 
-			StatementResult result = session.run("CALL example.toLatest(\"" + dataFolder + "\")");
+			StatementResult result = session.run("CALL dbmigrate.toLatest(\"" + dataFolder + "\")");
 			assertThat(result.single().get("message").asString(),
 					equalTo("Changed DB to version '2' from '0', by running 2 migration scripts"));
 
@@ -41,8 +44,8 @@ public class DBMigrateTest {
 				Session session = driver.session()) {
 
 			// assuming this works
-			session.run("CALL example.toLatest(\"" + dataFolder + "\")");
-			StatementResult result = session.run("CALL example.toOldest(\"" + dataFolder + "\")");
+			session.run("CALL dbmigrate.toLatest(\"" + dataFolder + "\")");
+			StatementResult result = session.run("CALL dbmigrate.toOldest(\"" + dataFolder + "\")");
 			assertThat(result.single().get("message").asString(),
 					equalTo("Changed DB to version '0' from '2', by running 2 migration scripts"));
 
@@ -57,7 +60,7 @@ public class DBMigrateTest {
 				Config.build().withEncryptionLevel(Config.EncryptionLevel.NONE).toConfig());
 				Session session = driver.session()) {
 
-			StatementResult result = session.run("CALL example.upTo(\"" + dataFolder + "\", 1)");
+			StatementResult result = session.run("CALL dbmigrate.upTo(\"" + dataFolder + "\", 1)");
 			assertThat(result.single().get("message").asString(),
 					equalTo("Changed DB to version '1' from '0', by running 1 migration scripts"));
 
@@ -73,8 +76,8 @@ public class DBMigrateTest {
 				Session session = driver.session()) {
 
 			// assuming this works
-			session.run("CALL example.upTo(\"" + dataFolder + "\", 1)");
-			StatementResult result = session.run("CALL example.upTo(\"" + dataFolder + "\", 2)");
+			session.run("CALL dbmigrate.upTo(\"" + dataFolder + "\", 1)");
+			StatementResult result = session.run("CALL dbmigrate.upTo(\"" + dataFolder + "\", 2)");
 			assertThat(result.single().get("message").asString(),
 					equalTo("Changed DB to version '2' from '1', by running 1 migration scripts"));
 
@@ -90,8 +93,8 @@ public class DBMigrateTest {
 				Session session = driver.session()) {
 
 			// assuming this works
-			session.run("CALL example.toLatest(\"" + dataFolder + "\")");
-			StatementResult result = session.run("CALL example.downTo(\"" + dataFolder + "\", 1)");
+			session.run("CALL dbmigrate.toLatest(\"" + dataFolder + "\")");
+			StatementResult result = session.run("CALL dbmigrate.downTo(\"" + dataFolder + "\", 1)");
 			assertThat(result.single().get("message").asString(),
 					equalTo("Changed DB to version '1' from '2', by running 1 migration scripts"));
 
@@ -106,7 +109,7 @@ public class DBMigrateTest {
 				Config.build().withEncryptionLevel(Config.EncryptionLevel.NONE).toConfig());
 				Session session = driver.session()) {
 
-			StatementResult result = session.run("CALL example.upTo(\"" + dataFolder + "\", 1000000)");
+			StatementResult result = session.run("CALL dbmigrate.upTo(\"" + dataFolder + "\", 1000000)");
 			assertThat(result.single().get("message").asString(),
 					equalTo("Changed DB to version '0' from '0', by running 0 migration scripts"));
 		}
@@ -119,8 +122,8 @@ public class DBMigrateTest {
 				Session session = driver.session()) {
 
 			// assuming this works
-			session.run("CALL example.toLatest(\"" + dataFolder + "\")");
-			StatementResult result = session.run("CALL example.downTo(\"" + dataFolder + "\", -1)");
+			session.run("CALL dbmigrate.toLatest(\"" + dataFolder + "\")");
+			StatementResult result = session.run("CALL dbmigrate.downTo(\"" + dataFolder + "\", -1)");
 			assertThat(result.single().get("message").asString(),
 					equalTo("Changed DB to version '2' from '2', by running 0 migration scripts"));
 
@@ -137,8 +140,8 @@ public class DBMigrateTest {
 				Session session = driver.session()) {
 
 			// assuming this works
-			session.run("CALL example.toLatest(\"" + dataFolder + "\")");
-			StatementResult result = session.run("CALL example.upTo(\"" + dataFolder + "\", 1)");
+			session.run("CALL dbmigrate.toLatest(\"" + dataFolder + "\")");
+			StatementResult result = session.run("CALL dbmigrate.upTo(\"" + dataFolder + "\", 1)");
 			assertThat(result.single().get("message").asString(),
 					equalTo("Changed DB to version '2' from '2', by running 0 migration scripts"));
 
@@ -155,21 +158,28 @@ public class DBMigrateTest {
 				Session session = driver.session()) {
 
 			// assuming this works
-			StatementResult result = session.run("CALL example.downTo(\"" + dataFolder + "\", 1)");
+			StatementResult result = session.run("CALL dbmigrate.downTo(\"" + dataFolder + "\", 1)");
 			assertThat(result.single().get("message").asString(),
 					equalTo("Changed DB to version '0' from '0', by running 0 migration scripts"));
 		}
 	}
 
 	@Test
-	// Down grade to a higher version from a lower version should do nothing
 	public void complainAboutInvalidMigrationFolder() {
 		try (Driver driver = GraphDatabase.driver(neo4j.boltURI(),
 				Config.build().withEncryptionLevel(Config.EncryptionLevel.NONE).toConfig());
 				Session session = driver.session()) {
 
-			// assuming this works
-			StatementResult result = session.run("CALL example.downTo(\"BOGUS_FOLDER\", 1)");
+			StatementResult result = session.run("CALL dbmigrate.toLatest(\"BOGUS_FOLDER\")");
+			assertThat(result.single().get("message").asString(), equalTo("Given folder does not exist"));
+
+			result = session.run("CALL dbmigrate.downTo(\"BOGUS_FOLDER\", 1)");
+			assertThat(result.single().get("message").asString(), equalTo("Given folder does not exist"));
+
+			result = session.run("CALL dbmigrate.upTo(\"BOGUS_FOLDER\", 2)");
+			assertThat(result.single().get("message").asString(), equalTo("Given folder does not exist"));
+
+			result = session.run("CALL dbmigrate.toOldest(\"BOGUS_FOLDER\")");
 			assertThat(result.single().get("message").asString(), equalTo("Given folder does not exist"));
 		}
 	}

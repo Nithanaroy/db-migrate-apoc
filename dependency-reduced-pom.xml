@@ -4,7 +4,7 @@
   <groupId>org.self.neo4japoc</groupId>
   <artifactId>db-migrate</artifactId>
   <name>APOC for DB Migrations</name>
-  <version>1.0.0-SNAPSHOT</version>
+  <version>1.0.0</version>
   <description>An APOC function for handling DB migrations</description>
   <build>
     <plugins>
