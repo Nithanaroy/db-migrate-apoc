@@ -1,41 +1,163 @@
 package example;
 
+import java.nio.file.Paths;
+
 import org.junit.Rule;
 import org.junit.Test;
 import org.neo4j.driver.v1.Config;
 import org.neo4j.driver.v1.Driver;
 import org.neo4j.driver.v1.GraphDatabase;
 import org.neo4j.driver.v1.Session;
+import org.neo4j.driver.v1.StatementResult;
 import org.neo4j.harness.junit.Neo4jRule;
+import static org.hamcrest.core.IsEqual.equalTo;
+import static org.junit.Assert.assertThat;
 
 public class DBMigrateTest {
-	// This rule starts a Neo4j instance for us
+	String dataFolder = Paths.get(System.getProperty("user.dir"), "src/test/testdata/").toAbsolutePath().toString();
+
 	@Rule
-	public Neo4jRule neo4j = new Neo4jRule()
-			// This is the Procedure we want to test
-			.withProcedure(DBMigrate.class);
+	public Neo4jRule neo4j = new Neo4jRule().withProcedure(DBMigrate.class);
 
 	@Test
-	public void shouldFetchMigrationsToRun() {
-		// In a try-block, to make sure we close the driver and session after
-		// the test
+	public void testMigrateToLatest() {
 		try (Driver driver = GraphDatabase.driver(neo4j.boltURI(),
 				Config.build().withEncryptionLevel(Config.EncryptionLevel.NONE).toConfig());
 				Session session = driver.session()) {
-			// Given I've started Neo4j with the FullTextIndex procedure class
-			// which my 'neo4j' rule above does.
-			// And given I have a node in the database
-			session.run("CREATE (p:VERSION {version: -1}) RETURN id(p)");
-			session.run("CALL example.upgrade(\"/Users/nitinp/Projects/db-migrate-apoc/public/\")");
-			// When I use the index procedure to index a node
-			// System.out.println(session.run("CALL
-			// example.version()").single().get(0).asLong());
 
-			// // Then I can search for that node with lucene query syntax
-			// StatementResult result = session.run("CALL example.search('User',
-			// 'name:Brook*')");
-			// assertThat(result.single().get("nodeId").asLong(),
-			// equalTo(nodeId));
+			StatementResult result = session.run("CALL example.toLatest(\"" + dataFolder + "\")");
+			assertThat(result.single().get("message").asString(),
+					equalTo("Changed DB to version '2' from '0', by running 2 migration scripts"));
+
+			result = session.run("MATCH (n:PERSON {name: \"super admin\"}) return n");
+			assertThat(result.single().values().size(), equalTo(1));
+		}
+	}
+
+	@Test
+	public void testMigrateToOldest() {
+		try (Driver driver = GraphDatabase.driver(neo4j.boltURI(),
+				Config.build().withEncryptionLevel(Config.EncryptionLevel.NONE).toConfig());
+				Session session = driver.session()) {
+
+			// assuming this works
+			session.run("CALL example.toLatest(\"" + dataFolder + "\")");
+			StatementResult result = session.run("CALL example.toOldest(\"" + dataFolder + "\")");
+			assertThat(result.single().get("message").asString(),
+					equalTo("Changed DB to version '0' from '2', by running 2 migration scripts"));
+
+			result = session.run("MATCH (n:PERSON) return n");
+			assertThat(result.hasNext(), equalTo(false));
+		}
+	}
+
+	@Test
+	public void testMigrateToOne() {
+		try (Driver driver = GraphDatabase.driver(neo4j.boltURI(),
+				Config.build().withEncryptionLevel(Config.EncryptionLevel.NONE).toConfig());
+				Session session = driver.session()) {
+
+			StatementResult result = session.run("CALL example.upTo(\"" + dataFolder + "\", 1)");
+			assertThat(result.single().get("message").asString(),
+					equalTo("Changed DB to version '1' from '0', by running 1 migration scripts"));
+
+			result = session.run("MATCH (n:PERSON {name: \"admin\"}) return n");
+			assertThat(result.single().values().size(), equalTo(1));
+		}
+	}
+
+	@Test
+	public void testMigrateFromOneToTwo() {
+		try (Driver driver = GraphDatabase.driver(neo4j.boltURI(),
+				Config.build().withEncryptionLevel(Config.EncryptionLevel.NONE).toConfig());
+				Session session = driver.session()) {
+
+			// assuming this works
+			session.run("CALL example.upTo(\"" + dataFolder + "\", 1)");
+			StatementResult result = session.run("CALL example.upTo(\"" + dataFolder + "\", 2)");
+			assertThat(result.single().get("message").asString(),
+					equalTo("Changed DB to version '2' from '1', by running 1 migration scripts"));
+
+			result = session.run("MATCH (n:PERSON {name: \"super admin\"}) return n");
+			assertThat(result.single().values().size(), equalTo(1));
+		}
+	}
+
+	@Test
+	public void testMigrateFromTwoToOne() {
+		try (Driver driver = GraphDatabase.driver(neo4j.boltURI(),
+				Config.build().withEncryptionLevel(Config.EncryptionLevel.NONE).toConfig());
+				Session session = driver.session()) {
+
+			// assuming this works
+			session.run("CALL example.toLatest(\"" + dataFolder + "\")");
+			StatementResult result = session.run("CALL example.downTo(\"" + dataFolder + "\", 1)");
+			assertThat(result.single().get("message").asString(),
+					equalTo("Changed DB to version '1' from '2', by running 1 migration scripts"));
+
+			result = session.run("MATCH (n:PERSON {name: \"admin\"}) return n");
+			assertThat(result.single().values().size(), equalTo(1));
+		}
+	}
+
+	@Test
+	public void testMigrateUptoInvalid() {
+		try (Driver driver = GraphDatabase.driver(neo4j.boltURI(),
+				Config.build().withEncryptionLevel(Config.EncryptionLevel.NONE).toConfig());
+				Session session = driver.session()) {
+
+			StatementResult result = session.run("CALL example.upTo(\"" + dataFolder + "\", 1000000)");
+			assertThat(result.single().get("message").asString(),
+					equalTo("Changed DB to version '0' from '0', by running 0 migration scripts"));
+		}
+	}
+	
+	@Test
+	public void testMigrateDownToInvalid() {
+		try (Driver driver = GraphDatabase.driver(neo4j.boltURI(),
+				Config.build().withEncryptionLevel(Config.EncryptionLevel.NONE).toConfig());
+				Session session = driver.session()) {
+			
+			// assuming this works
+			session.run("CALL example.toLatest(\"" + dataFolder + "\")");
+			StatementResult result = session.run("CALL example.downTo(\"" + dataFolder + "\", -1)");
+			assertThat(result.single().get("message").asString(),
+					equalTo("Changed DB to version '2' from '2', by running 0 migration scripts"));
+			
+			result = session.run("MATCH (n:PERSON {name: \"super admin\"}) return n");
+			assertThat(result.single().values().size(), equalTo(1));
+		}
+	}
+	
+	@Test
+	// Upgrade to a lower version from a higher version should do nothing
+	public void testMigrateUptoFromHigher() {
+		try (Driver driver = GraphDatabase.driver(neo4j.boltURI(),
+				Config.build().withEncryptionLevel(Config.EncryptionLevel.NONE).toConfig());
+				Session session = driver.session()) {
+			
+			// assuming this works
+			session.run("CALL example.toLatest(\"" + dataFolder + "\")");
+			StatementResult result = session.run("CALL example.upTo(\"" + dataFolder + "\", 1)");
+			assertThat(result.single().get("message").asString(),
+					equalTo("Changed DB to version '2' from '2', by running 0 migration scripts"));
+			
+			result = session.run("MATCH (n:PERSON {name: \"super admin\"}) return n");
+			assertThat(result.single().values().size(), equalTo(1));
+		}
+	}
+	
+	@Test
+	// Down grade to a higher version from a lower version should do nothing
+	public void testMigrateDownToFromLower() {
+		try (Driver driver = GraphDatabase.driver(neo4j.boltURI(),
+				Config.build().withEncryptionLevel(Config.EncryptionLevel.NONE).toConfig());
+				Session session = driver.session()) {
+			
+			// assuming this works
+			StatementResult result = session.run("CALL example.downTo(\"" + dataFolder + "\", 1)");
+			assertThat(result.single().get("message").asString(),
+					equalTo("Changed DB to version '0' from '0', by running 0 migration scripts"));
 		}
 	}
 }

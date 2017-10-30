@@ -1,0 +1,5 @@
+{
+	"upgrade": "CREATE (n:PERSON {name: \"admin\", role: \"ADMIN\"}) RETURN n;",
+	"downgrade": "MATCH (n:PERSON {name: \"admin\", role: \"ADMIN\"}) DETACH DELETE n;",
+	"description": "Adds an admin person node to the graph"
+}

@@ -1,0 +1,5 @@
+{
+	"upgrade": "MATCH (n:PERSON {name: \"admin\", role: \"ADMIN\"}) SET n.name = \"super admin\" RETURN n;",
+	"downgrade": "MATCH (n:PERSON {name: \"super admin\", role: \"ADMIN\"}) SET n.name = \"admin\" RETURN n;",
+	"description": "Changes admin node's name to super admin"
+}

@@ -84,8 +84,9 @@ public class DBMigrate {
 		System.out.println(String.format("Running migration, downgrade upto %s", version));
 		try {
 			Object[] runStats = upgradeOrDowngradeUptoToVersion(folder, version, MigrationType.DOWNGRADE);
-			return Stream.of(new Message[] {
-					new Message(String.format(upgradeDowngradeRespTemplate, version, runStats[1], runStats[2])) });
+			Object destinationVersion = ((int) runStats[2]) > 0 ? version : runStats[1];
+			return Stream.of(new Message[] { new Message(
+					String.format(upgradeDowngradeRespTemplate, destinationVersion, runStats[1], runStats[2])) });
 		} catch (Exception e) {
 			throw new RuntimeException(e); // this type is required by neo4j
 		}
