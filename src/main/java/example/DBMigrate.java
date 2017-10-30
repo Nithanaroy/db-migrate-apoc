@@ -40,6 +40,9 @@ public class DBMigrate {
 	@Description("Upgrades the DB to the latest version")
 	public Stream<Message> upgrade(@Name("folder") String folder) {
 		System.out.println("Upgrading DB to the latest version");
+		if (!(new File(folder).exists())) {
+			return Stream.of(new Message[] { new Message("Given folder does not exists") });
+		}
 		try {
 			Object[] runStats = upgradeOrDowngradeUptoToVersion(folder, Double.POSITIVE_INFINITY,
 					MigrationType.UPGRADE);
@@ -54,6 +57,9 @@ public class DBMigrate {
 	@Description("Upgrades the DB to a version not greater than the specified version")
 	public Stream<Message> upgradeTo(@Name("folder") String folder, @Name("version") long version) {
 		System.out.println(String.format("Running migration, upgrade upto %s", version));
+		if (!(new File(folder).exists())) {
+			return Stream.of(new Message[] { new Message("Given folder does not exists") });
+		}
 		try {
 			Object[] runStats = upgradeOrDowngradeUptoToVersion(folder, version, MigrationType.UPGRADE);
 			return Stream.of(new Message[] {
@@ -67,6 +73,9 @@ public class DBMigrate {
 	@Description("Downgrades the DB to the oldest version")
 	public Stream<Message> downgrade(@Name("folder") String folder) {
 		System.out.println("Downgrading the DB the oldest version");
+		if (!(new File(folder).exists())) {
+			return Stream.of(new Message[] { new Message("Given folder does not exists") });
+		}
 		try {
 			Object[] runStats = upgradeOrDowngradeUptoToVersion(folder, Double.NEGATIVE_INFINITY,
 					MigrationType.DOWNGRADE);
@@ -82,6 +91,9 @@ public class DBMigrate {
 	@Description("Downgrades the DB to a version not lesser than the specified version")
 	public Stream<Message> downgradeTo(@Name("folder") String folder, @Name("version") long version) {
 		System.out.println(String.format("Running migration, downgrade upto %s", version));
+		if (!(new File(folder).exists())) {
+			return Stream.of(new Message[] { new Message("Given folder does not exist") });
+		}
 		try {
 			Object[] runStats = upgradeOrDowngradeUptoToVersion(folder, version, MigrationType.DOWNGRADE);
 			Object destinationVersion = ((int) runStats[2]) > 0 ? version : runStats[1];

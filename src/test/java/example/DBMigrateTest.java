@@ -111,53 +111,66 @@ public class DBMigrateTest {
 					equalTo("Changed DB to version '0' from '0', by running 0 migration scripts"));
 		}
 	}
-	
+
 	@Test
 	public void testMigrateDownToInvalid() {
 		try (Driver driver = GraphDatabase.driver(neo4j.boltURI(),
 				Config.build().withEncryptionLevel(Config.EncryptionLevel.NONE).toConfig());
 				Session session = driver.session()) {
-			
+
 			// assuming this works
 			session.run("CALL example.toLatest(\"" + dataFolder + "\")");
 			StatementResult result = session.run("CALL example.downTo(\"" + dataFolder + "\", -1)");
 			assertThat(result.single().get("message").asString(),
 					equalTo("Changed DB to version '2' from '2', by running 0 migration scripts"));
-			
+
 			result = session.run("MATCH (n:PERSON {name: \"super admin\"}) return n");
 			assertThat(result.single().values().size(), equalTo(1));
 		}
 	}
-	
+
 	@Test
 	// Upgrade to a lower version from a higher version should do nothing
 	public void testMigrateUptoFromHigher() {
 		try (Driver driver = GraphDatabase.driver(neo4j.boltURI(),
 				Config.build().withEncryptionLevel(Config.EncryptionLevel.NONE).toConfig());
 				Session session = driver.session()) {
-			
+
 			// assuming this works
 			session.run("CALL example.toLatest(\"" + dataFolder + "\")");
 			StatementResult result = session.run("CALL example.upTo(\"" + dataFolder + "\", 1)");
 			assertThat(result.single().get("message").asString(),
 					equalTo("Changed DB to version '2' from '2', by running 0 migration scripts"));
-			
+
 			result = session.run("MATCH (n:PERSON {name: \"super admin\"}) return n");
 			assertThat(result.single().values().size(), equalTo(1));
 		}
 	}
-	
+
 	@Test
 	// Down grade to a higher version from a lower version should do nothing
 	public void testMigrateDownToFromLower() {
 		try (Driver driver = GraphDatabase.driver(neo4j.boltURI(),
 				Config.build().withEncryptionLevel(Config.EncryptionLevel.NONE).toConfig());
 				Session session = driver.session()) {
-			
+
 			// assuming this works
 			StatementResult result = session.run("CALL example.downTo(\"" + dataFolder + "\", 1)");
 			assertThat(result.single().get("message").asString(),
 					equalTo("Changed DB to version '0' from '0', by running 0 migration scripts"));
+		}
+	}
+
+	@Test
+	// Down grade to a higher version from a lower version should do nothing
+	public void complainAboutInvalidMigrationFolder() {
+		try (Driver driver = GraphDatabase.driver(neo4j.boltURI(),
+				Config.build().withEncryptionLevel(Config.EncryptionLevel.NONE).toConfig());
+				Session session = driver.session()) {
+
+			// assuming this works
+			StatementResult result = session.run("CALL example.downTo(\"BOGUS_FOLDER\", 1)");
+			assertThat(result.single().get("message").asString(), equalTo("Given folder does not exist"));
 		}
 	}
 }
