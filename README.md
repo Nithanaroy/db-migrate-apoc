@@ -1,6 +1,6 @@
 # Database Migration tool for Neo4j
 
-The **dbmigrate** [APOC]("https://neo4j.com/blog/intro-user-defined-procedures-apoc/") is a version control for neo4j!
+The **dbmigrate** plugin is a version control for neo4j!
 
 dbmigrate is very useful when:
 - Important changes done to the databases needs to be tracked, just like *git* does to our code base, so that we can easily move back and forth database states
@@ -10,7 +10,7 @@ Database migration is a very old concept and dbmigrate aims to bring the same po
 
 ## Installation
 
-Download the .jar file from the latest release https://github.com/Nithanaroy/db-migrate-apoc/releases and copy it to the `plugin` directory of your Neo4j instance just like any other APOC installation.
+Download the .jar file from the latest release (https://github.com/Nithanaroy/neo4j-db-schema-migration-tool/releases) and copy it to the `plugin` directory of your Neo4j instance just like any other APOC installation.
 
 [Note]
 This project requires a Neo4j 3.0.0 snapshot or milestone dependency.
