@@ -10,11 +10,7 @@ Database migration is a very old concept and dbmigrate aims to bring the same po
 
 ## Installation
 
-This project uses maven, to build a jar-file with the procedure in this project, simply package the project with maven:
-
-    mvn clean package
-
-This will produce a jar-file, `target/dbmigrate-*.jar`, that has to be copied to the `plugin` directory of your Neo4j instance.
+Download the .jar file from the latest release https://github.com/Nithanaroy/db-migrate-apoc/releases and copy it to the `plugin` directory of your Neo4j instance just like any other APOC installation.
 
 [Note]
 This project requires a Neo4j 3.0.0 snapshot or milestone dependency.
@@ -36,6 +32,15 @@ Having a basic understanding of the concept of database migration and neo4j APOC
 - `dbmigrate.version()`: returns the current version of the database
 - `dbmigrate.upTo(abs_folder_path, version_number)`: upgrades the database to the version_number specified. This is useful when we want to move to a specific newer version from the current version
 - `dbmigrate.downTo(abs_folder_path, version_number)`: down grades the database to the version_number specified. This is useful when we want to move to a specific older version of the database from the current version while debugging for example
+
+## Building Manually
+
+This project uses maven, to build a jar-file with the procedure in this project, simply package the project with maven:
+
+    mvn clean package
+
+This will produce a jar-file, `target/dbmigrate-*.jar`, that has to be copied to the `plugin` directory of your Neo4j instance.
+
 
 ## License
 
