@@ -19,7 +19,7 @@ This project requires a Neo4j 3.0.0 snapshot or milestone dependency.
 
 Having a basic understanding of the concept of database migration and neo4j APOC helps to relate the below steps better.
 
-- Create a migration file in a folder (on your file system) of your choice using `CALL dbmigrate.createMigrationFile(abs_folder_path, new_file_name)` APOC in neo4j browser or CLI. This creates a file with a name of the format, **<number>-yourFileName.json**. Here **number** is the unique version number for this migration and I will refer to it as version from now on.
+- Create a migration file in a folder (on your file system) of your choice using `CALL dbmigrate.createMigrationFile(abs_folder_path, new_file_name)` APOC in neo4j browser or CLI. This creates a file with a name of the format, **number-yourFileName.json**. Here **number** is the unique version number for this migration and I will refer to it as version from now on.
 - Update the contents of the file by filling the `upgrade`, `downgrade`, `description` (optional) values. Just like in any traditional migration, write the cypher which makes any change to the database under `upgrade`. Similarly write the cypher which undoes this action under `downgrade`. `description` is like to a note to everyone what change is made to the database in this migration file.
 - Run the migration file using `CALL dbmigrate.toLatest(abs_folder_path)` APOC in neo4j browser or CLI. The cypher in `upgrade` field is run and version of the database will be updated!
 - Congratulations you ran your first migration!
